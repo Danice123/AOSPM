@@ -3,6 +3,8 @@ require('bootstrap');
 import '../node_modules/font-awesome/css/font-awesome.css';
 import '../node_modules/bootstrap/dist/css/bootstrap.css';
 
+import imageModal from './imageModal';
+
 async function getPhotoList() {
 	return new Promise(function(resolve, reject) {
 		$.ajax({
@@ -37,7 +39,9 @@ function buildPhotoCard(photoId) {
 			$('<div>', { 'class': 'card-img-overlay' }).append(
 				$('<h5>', { 'class': 'card-title text-white', text: 'Card Title' })
 			)
-		)
+		).click(function() {
+			imageModal.openModal(photoId);
+		})
 	);
 }
 

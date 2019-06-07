@@ -1,3 +1,6 @@
 const level = require('level');
-var db = level('aospm-db')
-module.exports = db;
+
+module.exports = {
+    photoDB: level('aospm-photo'),
+    faceDB: level('aospm-face')
+};

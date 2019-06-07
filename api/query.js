@@ -4,7 +4,7 @@ const db = require('./db');
 router.get('/', (req, res) => {
     var photos = [];
 
-    db.createReadStream()
+    db.photoDB.createReadStream()
     .on('data', (data) => {
         photos.push(JSON.parse(data.value));
     })
