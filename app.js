@@ -15,6 +15,7 @@ app.use(require('cors')(corsOptions));
 app.use('/api/query', require('./api/query'));
 app.use('/api/photo', require('./api/photo'));
 app.use('/api/faces', require('./api/faces'));
+app.use('/api/person', require('./api/person'));
 
 app.use(express.static(path.join(__dirname, 'public/dist')));
 app.listen(port, () => console.log('Listening on port ' + port));

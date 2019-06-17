@@ -1,8 +1,7 @@
 const uuid = require('uuid/v4');
 const mime = require('mime-types');
 const globals = require('../const');
-const fs = require('fs');
-const sharp = require('sharp');
+const { readImage, getFaceData } = require('./photoUtils');
 
 const rekog = new (require('aws-sdk/clients/rekognition'))({
     region: 'us-east-2'
@@ -17,15 +16,6 @@ router.use(require('express-fileupload')({
 
 const db = require('./db');
 
-async function readImage(photo) {
-	return new Promise((resolve, reject) => {
-		fs.readFile(`${globals.library}/${photo.id}.${mime.extension(photo.mimetype)}`, async (err, data) => {
-			if (err) reject(err);
-			resolve(data);
-		});
-	});
-}
-
 router.put('/upload', handle(async (req, res) => {
 	if (req.files == undefined || req.files.photo == undefined) {
 		res.sendStatus(400);
@@ -33,10 +23,11 @@ router.put('/upload', handle(async (req, res) => {
 	}
 
 	var upload = req.files.photo;
-	var photo = {};
-	photo.id = uuid();
-	photo.mimetype = upload.mimetype;
-	photo.md5 = upload.md5;
+	var photo = {
+		id: uuid(),
+		mimetype: upload.mimetype,
+		md5: upload.md5
+	};
 	await db.photoDB.put(photo.id, JSON.stringify(photo));
 	await upload.mv(`${globals.library}/${photo.id}.${mime.extension(photo.mimetype)}`);
 
@@ -69,20 +60,7 @@ router.get('/:photoId/info', handle(async (req, res) => {
 
 router.get('/:photoId/face/:faceId', handle(async (req, res) => {
 	var photo = JSON.parse(await db.photoDB.get(req.params.photoId));
-	var face = photo.faces[req.params.faceId];
-
-	var image = sharp(await readImage(photo));
-	var meta = await image.metadata();
-
-	var { data, info } = await image
-	.extract({
-		left: parseInt(face.BoundingBox.Left * meta.width),
-		top: parseInt(face.BoundingBox.Top * meta.height),
-		width: parseInt(face.BoundingBox.Width * meta.width),
-		height: parseInt(face.BoundingBox.Height * meta.height)
-	})
-	.toBuffer({ resolveWithObject: true });
-
+	var { data, info } = await getFaceData(photo, req.params.faceId)
 	res.set('Content-Type', info.format);
 	res.send(data);
 }));
