@@ -13,9 +13,9 @@ module.exports.readImage = async function(photo) {
 }
 
 module.exports.getFaceData = async function(photo, faceId) {
-	var image = sharp(await readImage(photo));
+	var image = sharp(await module.exports.readImage(photo));
 	var face = photo.faces[faceId];
-	
+
 	var meta = await image.metadata();
 	return await image.extract({
 		left: parseInt(face.BoundingBox.Left * meta.width),

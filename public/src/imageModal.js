@@ -1,3 +1,5 @@
+import faceModal from './faceModal';
+
 var modal = $('<div>', { 'class': 'modal fade', id: 'imageView', tabindex: '-1', role: 'dialog'}).append(
 	$('<div>', { 'class': 'modal-dialog modal-xl modal-dialog-centered', role: 'document' }).append(
 		$('<div>', { 'class': 'modal-content' }).append(
@@ -9,9 +11,7 @@ var modal = $('<div>', { 'class': 'modal fade', id: 'imageView', tabindex: '-1',
 				)
 			)
 		).append(
-			$('<div>', { 'class': 'modal-body' }).append(
-				$('<canvas>', { 'class': 'w-100' })
-			)
+			$('<div>', { 'class': 'modal-body' })
 		)
 	)
 );
@@ -20,35 +20,15 @@ function createModal() {
 	$('body').append(modal);
 }
 
-async function getPhotoMetadata(photoId) {
-	return new Promise(function(resolve, reject) {
-		$.ajax({
-			url: `/api/photo/${photoId}/info`,
-			type: 'GET',
-			success: resolve,
-			error: reject
-		});
-	});
-}
-
-function  getMousePos(canvas, evt) {
-  var rect = canvas.getBoundingClientRect(), // abs. size of element
-      scaleX = canvas.width / rect.width,    // relationship bitmap vs. element for X
-      scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
-
-  return {
-    x: (evt.clientX - rect.left) * scaleX,   // scale mouse coordinates after they have
-    y: (evt.clientY - rect.top) * scaleY     // been adjusted to be relative to element
-  }
-}
-
 export default {
 	openModal: function(photoId) {
 		if (!$('#imageView').length) {
 			createModal()
 		}
 
-		var canvas = modal.find('canvas');
+		modal.find('.modal-body').empty();
+		var canvas = $('<canvas>', { 'class': 'w-100' });
+		modal.find('.modal-body').append(canvas);
 		var ctx = canvas[0].getContext('2d');
 
 		var img = new Image();
@@ -76,7 +56,7 @@ export default {
 							mPos.x < face.BoundingBox.x + face.BoundingBox.width &&
 							mPos.y > face.BoundingBox.y &&
 							mPos.y < face.BoundingBox.y + face.BoundingBox.height) {
-							console.log(face.id);
+							faceModal.openModal(photoId, face);
 						}
 					});
 				});
@@ -86,4 +66,26 @@ export default {
 
 		modal.modal('show');
 	}
+}
+
+async function getPhotoMetadata(photoId) {
+	return new Promise(function(resolve, reject) {
+		$.ajax({
+			url: `/api/photo/${photoId}/info`,
+			type: 'GET',
+			success: resolve,
+			error: reject
+		});
+	});
+}
+
+function  getMousePos(canvas, evt) {
+  var rect = canvas.getBoundingClientRect(), // abs. size of element
+      scaleX = canvas.width / rect.width,    // relationship bitmap vs. element for X
+      scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
+
+  return {
+    x: (evt.clientX - rect.left) * scaleX,   // scale mouse coordinates after they have
+    y: (evt.clientY - rect.top) * scaleY     // been adjusted to be relative to element
+  }
 }

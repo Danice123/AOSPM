@@ -65,4 +65,53 @@ router.get('/:photoId/face/:faceId', handle(async (req, res) => {
 	res.send(data);
 }));
 
+router.post('/:photoId/face/:faceId/match', handle(async (req, res) => {
+	var photo = JSON.parse(await db.photoDB.get(req.params.photoId));
+
+	var { data, info } = await getFaceData(photo, req.params.faceId)
+	var base64Data = new Buffer.from(data, 'binary');
+
+	return new Promise((resolve, reject) => {
+		var matchProcess = [];
+		db.personDB.createReadStream()
+		.on('data', (data) => {
+			matchProcess.push(matchAgainstPerson(data.key, base64Data));
+		})
+		.on('error', (err) => {
+			reject(err);
+		})
+		.on('end', async () => {
+			var matches = await Promise.all(matchProcess);
+			res.json(matches);
+			resolve();
+		});
+	});
+}));
+
 module.exports = router;
+
+async function matchAgainstPerson(personId, faceData) {
+    return new Promise((resolve, reject) => {
+        rekog.searchFacesByImage({
+            CollectionId: personId,
+            Image: { Bytes: faceData },
+			MaxFaces: 1,
+			FaceMatchThreshold: 0
+        }, (err, data) => {
+			if (err) reject(err);
+			if (data.FaceMatches.length == 0) {
+				resolve({
+					personId: personId,
+					confidence: 0
+				});
+			} else {
+				resolve({
+					personId: personId,
+					confidence: data.FaceMatches[0].Similarity,
+					sourcePhoto: data.FaceMatches[0].Face.ExternalImageId.split('-Face-')[0],
+					sourceFaceId: data.FaceMatches[0].Face.ExternalImageId.split('-Face-')[1]
+				});
+			}
+        });
+    });
+}
