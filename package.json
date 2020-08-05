@@ -12,7 +12,7 @@
     "aws-sdk": "^2.470.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "express-fileupload": "^1.1.4",
+    "express-fileupload": "^1.1.9",
     "level": "^5.0.1",
     "mime-types": "^2.1.24",
     "sharp": "^0.22.1",
